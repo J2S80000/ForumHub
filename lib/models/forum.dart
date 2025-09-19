@@ -1,6 +1,13 @@
 class Forum {
-  final String title; // Nom du forum (on peut récupérer depuis le site ou RSS)
-  final String url;   // Lien ou RSS feed
+  final String title;
+  final String url;
+  final String category; // ex: jvc, reddit, autre
+  final String source;   // le flux RSS qui l’a ajouté
 
-  Forum({required this.title, required this.url});
+  Forum({
+    required this.title,
+    required this.url,
+    required this.category,
+    required this.source,
+  });
 }

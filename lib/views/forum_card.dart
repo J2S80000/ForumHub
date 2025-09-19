@@ -1,8 +1,10 @@
+// forum_card.dart
 import 'package:flutter/material.dart';
 import '../controllers/forum_controller.dart';
 import '../controllers/theme_controller.dart';
 import 'drawer_menu.dart';
 import '../models/forum.dart';
+import '../controllers/rss_service.dart';
 
 class HomeView extends StatefulWidget {
   final ThemeController themeController;
@@ -87,17 +89,28 @@ class _HomeViewState extends State<HomeView> {
               onPressed: () => Navigator.of(context).pop(),
             ),
             ElevatedButton(
-              child: const Text("Add"),
-              onPressed: () {
-                final title = titleController.text.trim();
-                final url = urlController.text.trim();
-                if (title.isNotEmpty && url.isNotEmpty) {
-                  forumController.addForum(title, url);
-                  setState(() {}); // Met à jour la vue
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
+  child: const Text("Add"),
+  onPressed: () async {
+    final url = urlController.text.trim();
+    if (url.isEmpty) return;
+
+    try {
+      final rssService = RssService();
+      final forumsFromRss = await rssService.fetchForumsFromRss(url);
+
+      // Ajoute tous les forums récupérés au controller
+      forumController.addForums(forumsFromRss);
+
+      setState(() {}); // met à jour la vue
+      Navigator.of(context).pop();
+
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur lors de l'import RSS : $e")),
+      );
+    }
+  },
+),
           ],
         );
       },
