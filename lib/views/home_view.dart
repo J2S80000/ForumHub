@@ -18,59 +18,147 @@ class _HomeViewState extends State<HomeView> {
   final ForumController forumController = ForumController();
 
   @override
+  void initState() {
+    super.initState();
+    _initializeController();
+  }
+
+  Future<void> _initializeController() async {
+    await forumController.init();
+    setState(() {});
+  }
+
+  String searchQuery = "";
+
+  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+
+    // Regroupement + filtrage
+    final forumsByCategory = <String, List<Forum>>{};
+    for (var forum in forumController.forums) {
+      if (searchQuery.isEmpty ||
+          forum.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          forum.url.toLowerCase().contains(searchQuery.toLowerCase())) {
+        forumsByCategory.putIfAbsent(forum.category, () => []).add(forum);
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("ForumHub"),
         backgroundColor: colorScheme.primaryContainer,
         foregroundColor: colorScheme.onPrimaryContainer,
+        
       ),
-      drawer: DrawerMenu(themeController: widget.themeController),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: forumController.forums.isEmpty
-            ? const Center(child: Text("Add your favorites forum"))
-            : ListView.builder(
-                itemCount: forumController.forums.length,
-                itemBuilder: (context, index) {
-                  final forum = forumController.forums[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text(forum.title),
-                      subtitle: Text(forum.url),
-                      onTap: () async {
-                        try {
-                          final rssService = RssService();
-                          final threads =
-                              await rssService.fetchThreads(forum.url);
-
-                          if (threads.isNotEmpty) {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => ThreadView(
-                                  forumTitle: forum.title,
-                                  threads: threads,
-                                ),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text("No threads found")),
-                            );
-                          }
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Error: $e")),
-                          );
-                        }
-                      },
-                    ),
-                  );
-                },
+      drawer: DrawerMenu(
+        themeController: widget.themeController,
+        forumController: forumController,
+        onForumsChanged: () => setState(() {}),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: "Rechercher un forum...",
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
               ),
+              onChanged: (value) {
+                setState(() {
+                  searchQuery = value;
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: forumsByCategory.isEmpty
+                ? const Center(child: Text("Aucun forum trouvé"))
+                : ListView(
+                    children: forumsByCategory.entries.map((entry) {
+                      final category = entry.key;
+                      final forums = entry.value;
+
+                      return ExpansionTile(
+                        title: Text(
+                          category,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        children: forums.map((forum) {
+                          return Card(
+                            child: ListTile(
+                              title: Text(forum.title),
+                              subtitle: Text(forum.url),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  setState(() {
+                                    forumController.removeForum(forum);
+                                  });
+                                },
+                              ),
+                              onTap: () async {
+                                // Navigation ThreadView
+                                try {
+                                  // Afficher un indicateur de chargement
+                                  showDialog(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (context) => const Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  );
+
+                                  // Charger les threads depuis le flux RSS
+                                  final rssService = RssService();
+                                  final threads = await rssService.fetchThreads(
+                                      forum.url);
+
+                                  // Fermer l'indicateur de chargement
+                                  if (mounted) Navigator.of(context).pop();
+
+                                  // Naviguer vers ThreadView
+                                  if (mounted) {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => ThreadView(
+                                          forumTitle: forum.title,
+                                          threads: threads,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  // Fermer l'indicateur de chargement en cas d'erreur
+                                  if (mounted) Navigator.of(context).pop();
+
+                                  // Afficher l'erreur
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            "Erreur de chargement: ${e.toString()}"),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    }).toList(),
+                  ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddForumDialog(context),
@@ -128,5 +216,108 @@ class _HomeViewState extends State<HomeView> {
         );
       },
     );
+  }
+
+  void _handleMenuAction(String action) async {
+    switch (action) {
+      case 'export':
+        await _exportForums();
+        break;
+      case 'import':
+        await _importForums();
+        break;
+      case 'clear':
+        await _clearAllForums();
+        break;
+    }
+  }
+
+  Future<void> _exportForums() async {
+    try {
+      final filePath = await forumController.exportForums();
+      if (filePath != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Forums exportés vers: $filePath'),
+            backgroundColor: Colors.green,
+            action: SnackBarAction(
+              label: 'Partager',
+              onPressed: () {
+                // Ici tu peux ajouter une fonction de partage si nécessaire
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de l\'export: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _importForums() async {
+    try {
+      final success = await forumController.importForums();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success
+                ? 'Forums importés avec succès!'
+                : 'Aucun fichier sélectionné ou erreur d\'import'),
+            backgroundColor: success ? Colors.green : Colors.orange,
+          ),
+        );
+        if (success) setState(() {});
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de l\'import: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _clearAllForums() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmer la suppression'),
+        content: const Text('Êtes-vous sûr de vouloir supprimer tous les forums ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await forumController.clearAllForums();
+      setState(() {});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tous les forums ont été supprimés'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
   }
 }

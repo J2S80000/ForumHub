@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../controllers/forum_controller.dart';
 import '../controllers/theme_controller.dart';
 import 'drawer_menu.dart';
-import '../models/forum.dart';
 
 class HomeView extends StatefulWidget {
   final ThemeController themeController;

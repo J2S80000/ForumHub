@@ -3,7 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'views/home_view.dart';
 import 'controllers/theme_controller.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(ForumHubApp());
 }
 
@@ -19,7 +20,7 @@ class ForumHubApp extends StatelessWidget {
       builder: (context, _) {
         return MaterialApp(
           title: 'ForumHub',
-          debugShowCheckedModeBanner: false,
+          debugShowCheckedModeBanner: false, 
           themeMode: themeController.themeMode,
           theme: ThemeData(
             useMaterial3: true,
