@@ -6,28 +6,29 @@ import '../models/forum_post.dart';
 
 class ForumContentService {
   static const String _baseUrl = 'https://www.jeuxvideo.com';
+  final http.Client _client = http.Client();
   
   Future<List<ForumPost>> fetchThreadContent(String threadUrl) async {
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(threadUrl),
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'User-Agent': 'FocusForum/1.0.0 (Android)',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         },
-      );
+      ).timeout(const Duration(seconds: 15));
 
-      if (response.statusCode != 200) {
-        throw Exception('Failed to load thread content: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        return _parseThreadHtml(response.body);
+      } else {
+        throw Exception('Erreur HTTP: ${response.statusCode}');
       }
-
-      return _parseThreadContent(response.body, threadUrl);
     } catch (e) {
-      throw Exception('Error fetching thread content: $e');
+      throw Exception('Impossible de charger le contenu: $e');
     }
   }
 
-  List<ForumPost> _parseThreadContent(String htmlContent, String threadUrl) {
+  List<ForumPost> _parseThreadHtml(String htmlContent) {
     final document = html_parser.parse(htmlContent);
     final posts = <ForumPost>[];
 
@@ -52,6 +53,24 @@ class ForumContentService {
         }
       }
     }
+
+    // Simuler quelques posts pour les tests
+    // TODO: Implémenter le parsing réel selon le format du forum
+    posts.add(ForumPost(
+      id: '1',
+      author: 'AutorOriginal',
+      content: 'Ceci est le message original du topic...',
+      pubDate: DateTime.now().subtract(const Duration(hours: 2)),
+      postNumber: 1,
+    ));
+    
+    posts.add(ForumPost(
+      id: '2',
+      author: 'Répondeur1',
+      content: 'Le 15/01/2024 à 14:30:25, AutorOriginal a écrit :\nVoici ma réponse au message original.',
+      pubDate: DateTime.now().subtract(const Duration(hours: 1)),
+      postNumber: 2,
+    ));
 
     return posts;
   }
@@ -100,7 +119,7 @@ class ForumContentService {
         id: postId,
         author: author,
         content: content,
-        postDate: postDate,
+        pubDate: postDate,
         postNumber: postNumber,
         userLevel: userLevel,
         avatarUrl: avatarUrl.isNotEmpty ? _resolveUrl(avatarUrl) : '',
@@ -198,5 +217,9 @@ class ForumContentService {
     if (url.startsWith('//')) return 'https:$url';
     if (url.startsWith('/')) return '$_baseUrl$url';
     return url;
+  }
+
+  void dispose() {
+    _client.close();
   }
 }

@@ -26,8 +26,7 @@ class DrawerMenu extends StatelessWidget {
 
     return Drawer(
       backgroundColor: colorScheme.surface,
-      child: ListView(
-        padding: EdgeInsets.zero,
+      child: Column(
         children: [
           DrawerHeader(
             decoration: BoxDecoration(
@@ -61,125 +60,133 @@ class DrawerMenu extends StatelessWidget {
             ),
           ),
           
-          // Section Gestion des données
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Text(
-              "Gestion des données",
-              style: TextStyle(
-                color: colorScheme.primary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ),
-          ListTile(
-            leading: Icon(Icons.file_upload_outlined, color: colorScheme.primary),
-            title: const Text("Exporter les forums"),
-            subtitle: const Text("Sauvegarder vos forums"),
-            onTap: () => _exportForums(context),
-          ),
-          ListTile(
-            leading: Icon(Icons.file_download_outlined, color: colorScheme.primary),
-            title: const Text("Importer des forums"),
-            subtitle: const Text("Restaurer des forums"),
-            onTap: () => _importForums(context),
-          ),
-          ListTile(
-            leading: const Icon(Icons.delete_sweep, color: Colors.red),
-            title: const Text("Supprimer tous les forums"),
-            subtitle: const Text("Action irréversible"),
-            onTap: () => _clearAllForums(context),
-          ),
-          
-          const Divider(height: 32),
-          
-          // Section Application
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Text(
-              "Application",
-              style: TextStyle(
-                color: colorScheme.primary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ),
-          ListTile(
-            leading: Icon(Icons.settings_outlined, color: colorScheme.primary),
-            title: const Text("Paramètres"),
-            subtitle: const Text("Thème et préférences"),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => SettingsPage(themeController: themeController),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                // Section Gestion des données
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                  child: Text(
+                    "Gestion des données",
+                    style: TextStyle(
+                      color: colorScheme.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
                 ),
-              );
-            },
-          ),
-          
-          const Divider(height: 32),
-          
-          // Section À propos
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Text(
-              "À propos",
-              style: TextStyle(
-                color: colorScheme.primary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.2,
-              ),
+                ListTile(
+                  leading: Icon(Icons.file_upload_outlined, color: colorScheme.primary),
+                  title: const Text("Exporter les forums"),
+                  subtitle: const Text("Sauvegarder vos forums"),
+                  onTap: () => _exportForums(context),
+                ),
+                ListTile(
+                  leading: Icon(Icons.file_download_outlined, color: colorScheme.primary),
+                  title: const Text("Importer des forums"),
+                  subtitle: const Text("Restaurer des forums"),
+                  onTap: () => _importForums(context),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_sweep, color: Colors.red),
+                  title: const Text("Supprimer tous les forums"),
+                  subtitle: const Text("Action irréversible"),
+                  onTap: () => _clearAllForums(context),
+                ),
+                
+                const Divider(height: 32),
+                
+                // Section Application
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                  child: Text(
+                    "Application",
+                    style: TextStyle(
+                      color: colorScheme.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: Icon(Icons.settings_outlined, color: colorScheme.primary),
+                  title: const Text("Paramètres"),
+                  subtitle: const Text("Thème et préférences"),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => SettingsPage(themeController: themeController),
+                      ),
+                    );
+                  },
+                ),
+                
+                const Divider(height: 32),
+                
+                // Section À propos
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                  child: Text(
+                    "À propos",
+                    style: TextStyle(
+                      color: colorScheme.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: Icon(Icons.favorite_outline, color: Colors.pink),
+                  title: const Text("Soutenir le projet"),
+                  subtitle: const Text("Faire un don"),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    // Ajouter logique de donation
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.info_outline, color: colorScheme.primary),
+                  title: const Text("À propos"),
+                  subtitle: const Text("En savoir plus"),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    // Ajouter page à propos
+                  },
+                ),
+              ],
             ),
           ),
-          ListTile(
-            leading: Icon(Icons.favorite_outline, color: Colors.pink),
-            title: const Text("Soutenir le projet"),
-            subtitle: const Text("Faire un don"),
-            onTap: () {
-              Navigator.of(context).pop();
-              // Ajouter logique de donation
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.info_outline, color: colorScheme.primary),
-            title: const Text("À propos"),
-            subtitle: const Text("En savoir plus"),
-            onTap: () {
-              Navigator.of(context).pop();
-              // Ajouter page à propos
-            },
-          ),
           
-          const Spacer(),
-          
-          // Version en bas
+          // Version en bas - maintenant dans une section fixe
           Container(
             padding: const EdgeInsets.all(16),
-            child: Column(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: colorScheme.outline.withOpacity(0.2),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Divider(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.verified,
-                      size: 16,
-                      color: colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      "Version 1.0.0",
-                      style: TextStyle(
-                        color: colorScheme.onSurface.withOpacity(0.6),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+                Icon(
+                  Icons.verified,
+                  size: 16,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  "Version 1.0.0",
+                  style: TextStyle(
+                    color: colorScheme.onSurface.withOpacity(0.6),
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -331,4 +338,3 @@ class SettingsPage extends StatelessWidget {
     );
   }
 }
-          

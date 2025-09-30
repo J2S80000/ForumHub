@@ -3,7 +3,7 @@ class ForumPost {
   final String id;
   final String author;
   final String content;
-  final DateTime postDate;
+  final DateTime pubDate;
   final int postNumber;
   final String userLevel;
   final String avatarUrl;
@@ -12,7 +12,7 @@ class ForumPost {
     required this.id,
     required this.author,
     required this.content,
-    required this.postDate,
+    required this.pubDate,
     required this.postNumber,
     this.userLevel = '',
     this.avatarUrl = '',
@@ -24,7 +24,7 @@ class ForumPost {
   // Getter pour le temps relatif
   String get timeAgo {
     final now = DateTime.now();
-    final difference = now.difference(postDate);
+    final difference = now.difference(pubDate);
 
     if (difference.inMinutes < 60) {
       return "il y a ${difference.inMinutes}min";
@@ -33,17 +33,17 @@ class ForumPost {
     } else if (difference.inDays < 7) {
       return "il y a ${difference.inDays}j";
     } else {
-      return "${postDate.day}/${postDate.month}/${postDate.year}";
+      return "${pubDate.day}/${pubDate.month}/${pubDate.year}";
     }
   }
 
   // Getter pour la date formatée
   String get formattedDate {
-    return "${postDate.day.toString().padLeft(2, '0')}/"
-           "${postDate.month.toString().padLeft(2, '0')}/"
-           "${postDate.year} "
-           "${postDate.hour.toString().padLeft(2, '0')}:"
-           "${postDate.minute.toString().padLeft(2, '0')}";
+    return "${pubDate.day.toString().padLeft(2, '0')}/"
+           "${pubDate.month.toString().padLeft(2, '0')}/"
+           "${pubDate.year} "
+           "${pubDate.hour.toString().padLeft(2, '0')}:"
+           "${pubDate.minute.toString().padLeft(2, '0')}";
   }
 
   // Vérifie si le contenu contient une citation

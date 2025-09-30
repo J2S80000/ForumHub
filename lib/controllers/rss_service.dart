@@ -1,21 +1,59 @@
 // lib/controllers/rss_service.dart
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart';
+import 'dart:async';        // Pour TimeoutException
+import 'dart:io';           // Pour HttpException
+import 'package:flutter/foundation.dart'; // Pour debugPrint
 import '../models/thread.dart';
 
 class RssService {
+  final http.Client _client = http.Client();
+  
   Future<List<Thread>> fetchThreads(String url) async {
     // Si l'URL n'a pas de protocole, on ajoute https://
     if (!url.startsWith("http://") && !url.startsWith("https://")) {
       url = "https://$url";
     }
 
-    final response = await http.get(Uri.parse(url));
-    if (response.statusCode != 200) {
-      throw Exception("Failed to load RSS feed");
-    }
+    int retryCount = 0;
+    const int maxRetries = 3;
+    
+    while (retryCount < maxRetries) {
+      try {
+        debugPrint('Tentative ${retryCount + 1} - Chargement RSS: $url');
+        
+        final response = await _client.get(
+          Uri.parse(url),
+          headers: {
+            'User-Agent': 'FocusForum/1.0.0 (Android)',
+            'Accept': 'application/rss+xml, application/xml, text/xml',
+          },
+        ).timeout(
+          const Duration(seconds: 15),
+          onTimeout: () {
+            throw TimeoutException('Timeout après 15 secondes', const Duration(seconds: 15));
+          },
+        );
 
-    return _parseRssFeed(response.body);
+        if (response.statusCode == 200) {
+          return _parseRssFeed(response.body);
+        } else {
+          throw HttpException('Code de réponse HTTP: ${response.statusCode}');
+        }
+      } catch (e) {
+        retryCount++;
+        debugPrint('Erreur tentative $retryCount: $e');
+        
+        if (retryCount >= maxRetries) {
+          throw Exception('Impossible de charger le flux RSS après $maxRetries tentatives: ${e.toString()}');
+        }
+        
+        // Attendre avant de réessayer
+        await Future.delayed(Duration(seconds: retryCount * 2));
+      }
+    }
+    
+    return [];
   }
 
   List<Thread> _parseRssFeed(String xmlContent) {
@@ -139,5 +177,10 @@ class RssService {
         .replaceAll('&lt;', '<')
         .replaceAll('&gt;', '>')
         .replaceAll('&#039;', "'");
+  }
+  
+  @override
+  void dispose() {
+    _client.close();
   }
 }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">jeuxvideo.com</domain>
+        <domain includeSubdomains="true">www.jeuxvideo.com</domain>
+        <domain includeSubdomains="true">reddit.com</domain>
+        <domain includeSubdomains="true">www.reddit.com</domain>
+    </domain-config>
+    
+    <!-- Permettre le trafic en clair pour tous les domaines en développement -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+</network-security-config>

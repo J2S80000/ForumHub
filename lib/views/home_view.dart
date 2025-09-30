@@ -95,14 +95,41 @@ class _HomeViewState extends State<HomeView> {
                           return Card(
                             child: ListTile(
                               title: Text(forum.title),
-                              subtitle: Text(forum.url),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () {
-                                  setState(() {
-                                    forumController.removeForum(forum);
-                                  });
-                                },
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(forum.url),
+                                  if (forum.isFavorite)
+                                    const Row(
+                                      children: [
+                                        Icon(Icons.favorite, size: 16, color: Colors.red),
+                                        SizedBox(width: 4),
+                                        Text('Favori', style: TextStyle(fontSize: 12)),
+                                      ],
+                                    ),
+                                ],
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      forum.isFavorite ? Icons.favorite : Icons.favorite_border,
+                                      color: forum.isFavorite ? Colors.red : null,
+                                    ),
+                                    onPressed: () {
+                                      forumController.toggleFavorite(forum);
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red),
+                                    onPressed: () {
+                                      setState(() {
+                                        forumController.removeForum(forum);
+                                      });
+                                    },
+                                  ),
+                                ],
                               ),
                               onTap: () async {
                                 // Navigation ThreadView
@@ -139,13 +166,33 @@ class _HomeViewState extends State<HomeView> {
                                   // Fermer l'indicateur de chargement en cas d'erreur
                                   if (mounted) Navigator.of(context).pop();
 
-                                  // Afficher l'erreur
+                                  // Afficher l'erreur avec plus de contexte
                                   if (mounted) {
+                                    String errorMessage = "Erreur de chargement";
+                                    
+                                    if (e.toString().contains('SocketException') || 
+                                        e.toString().contains('No address associated')) {
+                                      errorMessage = "Pas de connexion Internet disponible.\nVérifiez votre connexion réseau.";
+                                    } else if (e.toString().contains('TimeoutException')) {
+                                      errorMessage = "Délai d'attente dépassé.\nLe serveur met trop de temps à répondre.";
+                                    } else if (e.toString().contains('HttpException')) {
+                                      errorMessage = "Erreur du serveur.\nLe flux RSS n'est peut-être pas disponible.";
+                                    } else {
+                                      errorMessage = "Erreur: ${e.toString()}";
+                                    }
+                                    
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text(
-                                            "Erreur de chargement: ${e.toString()}"),
+                                        content: Text(errorMessage),
                                         backgroundColor: Colors.red,
+                                        duration: const Duration(seconds: 5),
+                                        action: SnackBarAction(
+                                          label: 'Réessayer',
+                                          textColor: Colors.white,
+                                          onPressed: () {
+                                            // Relancer le chargement
+                                          },
+                                        ),
                                       ),
                                     );
                                   }
